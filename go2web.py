@@ -2,48 +2,18 @@
 import sys
 import socket
 import urllib.parse
-from html.parser import HTMLParser
+from bs4 import BeautifulSoup
 
-class GoogleSearchParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.in_search_result = False
-        self.search_results = []
-        self.current_result = ""
-        self.result_count = 0
-
-    def handle_starttag(self, tag, attrs):
-        if tag == 'h3' and ('class', 'tTf9Te') in attrs:
-            self.in_search_result = True
-
-    def handle_endtag(self, tag):
-        if tag == 'h3' and self.in_search_result:
-            self.in_search_result = False
-            self.result_count += 1
-            self.search_results.append(self.current_result)
-            self.current_result = ""
-
-    def handle_data(self, data):
-        if self.in_search_result:
-            self.current_result += data + "\n"
 
 def make_http_request(url):
-    parsed_url = urllib.parse.urlparse(url)
-    host = parsed_url.netloc
-    path = parsed_url.path if parsed_url.path else '/'
     try:
-        with socket.create_connection((host, 80)) as sock:
-            sock.sendall(f"GET {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n".encode())
-            response = b''
-            while True:
-                data = sock.recv(1024)
-                if not data:
-                    break
-                response += data
-    except socket.error as e:
-        print(f"Error: {e}")
-        return None
-    return response.decode(errors='ignore')
+        parsed_url = urllib.urlparse(url)
+        with socket.create_connection((parsed_url.netloc, 80)) as s:
+            s.sendall(f"GET {parsed_url.path or '/'} HTTP/1.1\r\nHost: {parsed_url.netloc}\r\nConnection: close\r\n\r\n".encode())
+            response = b''.join(iter(lambda: s.recv(1024), b''))
+        return BeautifulSoup(response, 'html.parser').get_text()
+    except Exception as e:
+        return f"Error: {e}"
 
 def print_help():
     print("Usage:")
