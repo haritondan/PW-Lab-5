@@ -16,24 +16,23 @@ def make_http_request(url):
         return f"Error: {e}"
 
 def print_help():
-    print("Usage:")
     print("go2web -u <URL>         # make an HTTP request to the specified URL and print the response")
     print("go2web -s <search-term> # make an HTTP request to search the term using Google and print top 10 results")
     print("go2web -h               # show this help")
+def main():
+    args = sys.argv[1:]
+    if len(args) < 2 or args[0] not in ['-u', '-s', '-h']:
+        print_help()
+        return
+
+    option, arg = args[:2]
+    actions = {'-u': lambda: make_http_request(arg),
+               # '-s': lambda: search(arg),
+               '-h': print_help}
+
+    print(actions.get(option, lambda: "Invalid option. Use '-h' for help.")())
+
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    if not args or '-h' in args:
-        print_help()
-    elif '-u' in args:
-        try:
-            url_index = args.index('-u') + 1
-            url = args[url_index]
-            response = make_http_request(url)
-            if response:
-                print(response)
-        except IndexError:
-            print("Error: Missing URL after -u")
-        except IndexError:
-            print("Error: Missing search term after -s")
+    main()
 
