@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sys
 import socket
 import urllib.parse
@@ -12,6 +11,20 @@ def make_http_request(url):
             s.sendall(f"GET {parsed_url.path or '/'} HTTP/1.1\r\nHost: {parsed_url.netloc}\r\nConnection: close\r\n\r\n".encode())
             response = b''.join(iter(lambda: s.recv(1024), b''))
         return BeautifulSoup(response, 'html.parser').get_text()
+    except Exception as e:
+        return f"Error: {e}"
+
+def search(search_term):
+    try:
+        search_url = f"/search?q={search_term}"
+        with socket.create_connection(('www.google.md', 80)) as s:
+            s.sendall(f"GET {search_url} HTTP/1.1\r\nHost: www.google.md\r\nConnection: close\r\n\r\n".encode())
+            response = b''.join(iter(lambda: s.recv(1024), b''))
+        soup = BeautifulSoup(response, 'html.parser')
+        results = []
+        for i, result in enumerate(soup.find_all('a')[16:26], start=1):
+            results.append(f"{i}. {result.text} - {result['href']}")
+        return '\n'.join(results)
     except Exception as e:
         return f"Error: {e}"
 
