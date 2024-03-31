@@ -91,6 +91,7 @@ def search(response):
         if header.startswith(b'Content-Type:'):
             content_type = header.split(b':', 1)[1].strip()
 
+    # For json commit
     if content_type and content_type.startswith(b'application/json'):
         print("\nJSON Response Headers:\n")
         print(headers.decode('utf-8'))
