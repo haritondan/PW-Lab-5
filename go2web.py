@@ -2,11 +2,31 @@ import json
 import ssl
 import sys
 import socket
-from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+import warnings
+import pickle
 
 PORT = 80
 RECV_SIZE = 4096
+cache_file = 'cache.pickle'
+
+warnings.filterwarnings('ignore', category=DeprecationWarning)
+
+
+def load_cache(cache_file):
+    try:
+        with open(cache_file, 'rb') as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        cache_data = {}
+        save_cache(cache_file, cache_data)
+        return cache_data
+
+
+def save_cache(cache_file, cache_data):
+    with open(cache_file, 'wb') as f:
+        pickle.dump(cache_data, f)
+
 
 def make_http_request(url):
     try:
@@ -145,7 +165,7 @@ def main():
             print("Using cached data...")
             response = cache_data[url]
         else:
-            response = make_request(url)
+            response = make_http_request(url)
             cache_data[url] = response
             save_cache(cache_file, cache_data)
 
@@ -163,7 +183,7 @@ def main():
             print("Using cached data...")
             results = cache_data[search_term]
         else:
-            results = make_request(f"https://www.bing.com/search?q={search_term}")
+            results = make_http_request(f"https://www.bing.com/search?q={search_term}")
             cache_data[search_term] = results
             save_cache(cache_file, cache_data)
 
@@ -173,11 +193,11 @@ def main():
         url = sys.argv[2]
         search_term = sys.argv[4]
         search_term = search_term.replace(" ", "+")
-        results = make_request((f"{url}/search?q={search_term}"))
+        results = make_http_request((f"{url}/search?q={search_term}"))
         search(results)
 
     else:
-        print("Invalid option. Use -h for help."
+        print("Invalid option. Use -h for help.")
 
 
 if __name__ == "__main__":
